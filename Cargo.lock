@@ -86,6 +86,8 @@ checksum = "3a3076410a55c90011c298b04d0cfa770b00fa04e1e3c97d3f6c9de105a03844"
 name = "fuse_runtime_core"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "fuse_runtime_window",
  "serde",
  "tokio",
  "uuid",
@@ -458,6 +460,16 @@ dependencies = [
  "thiserror",
  "toml",
  "version-compare",
+]
+
+[[package]]
+name = "test-app"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fuse_runtime_core",
+ "fuse_runtime_window",
+ "tokio",
 ]
 
 [[package]]

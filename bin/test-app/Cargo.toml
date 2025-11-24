@@ -1,0 +1,10 @@
+[package]
+name = "test-app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fuse_runtime_core = { path = "../../crates/core" }
+fuse_runtime_window = { path = "../../crates/window" }
+anyhow = "1.0.100"
+tokio = { version = "1.48.0", features = ["full"] }
