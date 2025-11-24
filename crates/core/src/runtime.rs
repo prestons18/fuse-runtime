@@ -1,8 +1,9 @@
+use fuse_runtime_window::Window;
 use tokio::runtime::Runtime as TokioRuntime;
 use crate::event_bus::EventBus;
 
 pub struct Runtime {
-    windows: Vec<String>,
+    windows: Vec<Window>,
     event_bus: EventBus,
     tokio: TokioRuntime,
 }
@@ -23,8 +24,17 @@ impl Runtime {
         })
     }
 
-    pub fn add_window(&mut self, id: String) {
-        self.windows.push(id);
+    pub fn add_window(&mut self, window: Window) {
+        self.windows.push(window);
+    }
+    
+    pub fn run_window(&mut self, index: usize) -> anyhow::Result<()> {
+        if index < self.windows.len() {
+            let window = self.windows.remove(index);
+            window.run()
+        } else {
+            Err(anyhow::anyhow!("Window index out of bounds"))
+        }
     }
 
     pub fn broadcast(&self, channel: &str, payload: &str) {

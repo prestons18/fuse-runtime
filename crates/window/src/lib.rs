@@ -1,23 +1,23 @@
 use web_view::*;
 
-pub struct Window<'a> {
-    view: WebView<'a, ()>,
+pub struct Window {
+    view: WebView<'static, ()>,
 }
 
-pub struct WindowOptions<'a> {
-    pub title: &'a str,
-    pub html: &'a str,
+pub struct WindowOptions {
+    pub title: String,
+    pub html: String,
     pub width: i32,
     pub height: i32,
     pub resizable: bool,
     pub debug: bool,
 }
 
-impl<'a> Window<'a> {
-    pub fn new(opts: WindowOptions<'a>) -> anyhow::Result<Self> {
+impl Window {
+    pub fn new(opts: WindowOptions) -> anyhow::Result<Self> {
         let view = web_view::builder()
-            .title(opts.title)
-            .content(Content::Html(opts.html))
+            .title(Box::leak(opts.title.into_boxed_str()))
+            .content(Content::Html(Box::leak(opts.html.into_boxed_str())))
             .size(opts.width, opts.height)
             .resizable(opts.resizable)
             .debug(opts.debug)
