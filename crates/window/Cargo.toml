@@ -1,0 +1,9 @@
+[package]
+name = "fuse_runtime_window"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+uuid = "1.18.1"
+web-view = "0.7.3"
