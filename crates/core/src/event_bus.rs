@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Debug, Clone)]
 pub struct Event {
@@ -7,34 +8,43 @@ pub struct Event {
     pub payload: String,
 }
 
-type Callback = Box<dyn Fn(Event) + Send + Sync>;
+type AsyncCallback = Arc<dyn Fn(Event) + Send + Sync>;
 
 #[derive(Clone)]
 pub struct EventBus {
-    subscribers: Arc<Mutex<HashMap<String, Vec<Callback>>>>,
+    subscribers: Arc<RwLock<HashMap<String, Vec<AsyncCallback>>>>,
 }
 
 impl EventBus {
     pub fn new() -> Self {
-        Self { subscribers: Arc::new(Mutex::new(HashMap::new())) }
+        Self { subscribers: Arc::new(RwLock::new(HashMap::new())) }
     }
 
-    pub fn subscribe<F>(&self, channel: &str, callback: F)
+    pub async fn subscribe<F>(&self, channel: &str, callback: F)
     where F: Fn(Event) + Send + Sync + 'static {
-        self.subscribers.lock().unwrap()
+        self.subscribers.write().await
             .entry(channel.to_string())
             .or_insert_with(Vec::new)
-            .push(Box::new(callback));
+            .push(Arc::new(callback));
     }
 
-    pub fn publish(&self, channel: &str, payload: &str) {
-        if let Some(callbacks) = self.subscribers.lock().unwrap().get(channel) {
-            let event = Event { channel: channel.to_string(), payload: payload.to_string() };
-            for cb in callbacks { cb(event.clone()); }
+    pub async fn publish(&self, channel: &str, payload: &str) {
+        let callbacks = self.subscribers.read().await.get(channel).cloned();
+        
+        if let Some(callbacks) = callbacks {
+            let event = Event { 
+                channel: channel.to_string(), 
+                payload: payload.to_string() 
+            };
+            
+            for cb in callbacks {
+                let event = event.clone();
+                tokio::spawn(async move { cb(event); });
+            }
         }
     }
 
-    pub fn publish_event(&self, event: Event) {
-        self.publish(&event.channel, &event.payload);
+    pub async fn publish_event(&self, event: Event) {
+        self.publish(&event.channel, &event.payload).await;
     }
 }

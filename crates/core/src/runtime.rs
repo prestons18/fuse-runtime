@@ -1,5 +1,5 @@
 use tokio::runtime::Runtime as TokioRuntime;
-use crate::event_bus::{EventBus, Event};
+use crate::event_bus::EventBus;
 
 pub struct Runtime {
     windows: Vec<String>,
@@ -9,7 +9,11 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn new() -> Self {
-        Runtime { windows: vec![], event_bus: EventBus::new(), tokio: TokioRuntime::new().unwrap() }
+        Runtime { 
+            windows: vec![], 
+            event_bus: EventBus::new(), 
+            tokio: TokioRuntime::new().unwrap() 
+        }
     }
 
     pub fn run(&mut self) {
@@ -24,10 +28,12 @@ impl Runtime {
     }
 
     pub fn broadcast(&self, channel: &str, payload: &str) {
-        let event = Event {
-            channel: channel.to_string(),
-            payload: payload.to_string(),
-        };
-        self.event_bus.publish_event(event);
+        let event_bus = self.event_bus.clone();
+        let channel = channel.to_string();
+        let payload = payload.to_string();
+        
+        self.tokio.spawn(async move {
+            event_bus.publish(&channel, &payload).await;
+        });
     }
 }
