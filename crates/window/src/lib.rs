@@ -1,14 +1,40 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use web_view::*;
+
+pub struct Window<'a> {
+    view: WebView<'a, ()>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub struct WindowOptions<'a> {
+    pub title: &'a str,
+    pub html: &'a str,
+    pub width: i32,
+    pub height: i32,
+    pub resizable: bool,
+    pub debug: bool,
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+impl<'a> Window<'a> {
+    pub fn new(opts: WindowOptions<'a>) -> anyhow::Result<Self> {
+        let view = web_view::builder()
+            .title(opts.title)
+            .content(Content::Html(opts.html))
+            .size(opts.width, opts.height)
+            .resizable(opts.resizable)
+            .debug(opts.debug)
+            .user_data(())
+            .invoke_handler(|_webview, _arg| Ok(()))
+            .build()?;
+
+        Ok(Self { view })
+    }
+
+    pub fn run(self) -> anyhow::Result<()> {
+        self.view.run()?;
+        Ok(())
+    }
+
+    pub fn eval(&mut self, js: &str) -> anyhow::Result<()> {
+        self.view.eval(js)?;
+        Ok(())
     }
 }
